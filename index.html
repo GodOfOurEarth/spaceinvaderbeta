@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+	<title>kaboom</title>
+	<meta charset="utf-8">
+	<style>
+		* {
+			margin: 0;
+		}
+		html,
+		body {
+			width: 100%;
+			height: 100%;
+			overflow: hidden;
+		}
+		canvas {
+			display: block;
+		}
+    
+    <script type="module">
+    
+    import kaboom from "kaboom"
+
+  // initialize context
+  kaboom()
+
+  //spritesLoad
+  loadSprite("space-invader", "sprites/space-invader.png");
+  loadPedit("wall", "sprites/wall.pedit");
+  loadPedit("space-ship", "sprites/space-ship.pedit");
+  loadPedit("background", "sprites/background.pedit");
+
+  //variables
+  const MOVE_SPEED = 200
+  const INVADER_SPEED = 75
+  let CURRENT_SPEED = INVADER_SPEED
+  const LEVEL_DOWN = 200
+  const BULLET_SPEED = 400
+
+  //layers
+  layers([
+      "bg",
+      "game",
+      "ui",
+  ], "game")
+
+
+  //level
+  addLevel([
+    '!^^^^^^^^^^^^    &',
+    '!^^^^^^^^^^^^    &',
+    '!^^^^^^^^^^^^    &', 
+    '!                &',
+    '!                &',
+    '!                &',
+    '!                &',
+    '!                &',
+    '!                &',
+    '!                &',
+    '!                &',
+    '!                &',
+  ], {
+    width: 30,
+    height: 22,
+    '^' : () => [
+      sprite('space-invader'),
+      scale(1.5),
+      'space-invader',
+      area(),
+    ],
+    '!' : () => [
+      sprite('wall'),
+      'left-wall',
+      area(),
+      solid()
+    ],
+    '&' : () => [
+      sprite('wall'),
+      'right-wall',
+      area(),
+      solid()
+    ],
+  })
+
+    //player scripts
+  const player = add([
+    sprite('space-ship'),
+    pos(250, 200),
+    origin('center'),
+    solid(),
+    area()
+  ])
+
+  onKeyDown('left', () => {
+    player.move(-MOVE_SPEED, 0)
+  })
+
+  onKeyDown('right', () => {
+    player.move(MOVE_SPEED, 0)
+  })
+
+  //score
+  const score = add([
+    text('0'),
+    scale(0.7),
+    fixed(),
+    pos(15, 15),
+    {
+      value: 0,
+    }
+  ])
+
+  //invaders scripts
+  action('space-invader', (s) => {
+    s.move(CURRENT_SPEED, 0)
+  })
+
+  collides('space-invader', 'right-wall', () => {
+    CURRENT_SPEED = -INVADER_SPEED
+    every('space-invader', (s) => {
+      s.move(0, LEVEL_DOWN)
+    })
+  })
+
+  collides('space-invader', 'left-wall', () => {
+    CURRENT_SPEED = INVADER_SPEED
+    every('space-invader', (s) => {
+      s.move(0, LEVEL_DOWN)
+    })
+  })
+
+  //shooting
+  function spawnBullet(p) {
+    add([
+      rect(6,18), 
+      pos(p), 
+      origin('center'), 
+      color(0, 0, 256),
+      'bullet',
+      area()
+      ])
+  }
+
+  keyPress('space', () => {
+  spawnBullet(player.pos.add(0, -25))
+  })
+
+  action('bullet', (b) => {
+    b.move(0, -BULLET_SPEED)
+    if (b.pos.y < 0) {
+      destroy(b)
+    }
+  })
+
+  collides('bullet', 'space-invader', (b,s) => {
+    shake(2)
+    destroy(b)
+    destroy(s)
+    score.value++
+    score.text = score.value
+  })
+
+  //background
+  const background = add([
+    sprite('background'),
+    scale(200),
+    layer('bg'),
+    pos(-500, -100)
+  ])
+
+  //camera
+  player.onUpdate(() => {
+    camPos(player.pos),
+    camScale(2.4)
+  })
+
+  </script>
+	</style>
+</head>
+
+<body>
+
+</body>
+
+</html>
